@@ -1,0 +1,359 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <title>Screen Time Summary</title> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <style> 
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px; 
+            background: #f7f7f7; 
+        } 
+ 
+        .container { 
+            background: #fff; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 8px #ccc; 
+            max-width: 500px; 
+            margin: auto; 
+        } 
+ 
+        h1 { 
+            color: #2c3e50; 
+        } 
+ 
+        .stat { 
+            margin: 15px 0; 
+            font-size: 1.2em; 
+        } 
+ 
+        .label { 
+            color: #888; 
+        } 
+ 
+        .value { 
+            color: #222; 
+            font-weight: bold; 
+        } 
+ 
+        .description { 
+            margin-top: 20px; 
+            font-style: italic; 
+            text-align: center; 
+            color: #555; 
+        } 
+    </style> 
+</head> 
+<body> 
+    <div class="container"> 
+        <h1>Screen Time Summary</h1> 
+        <div class="stat"><span class="label">Total Entries:</span> <span class="value" 
+id="total_entries"></span></div> 
+        <div class="stat"><span class="label">Unique Ages:</span> <span class="value" 
+id="unique_ages"></span></div> 
+        <div class="stat"><span class="label">Gender Distribution:</span> 
+            <span class="value" id="gender_distribution"></span></div> 
+        <div class="stat"><span class="label">Avg Screen Time (hrs):</span> 
+            <span class="value" id="avg_screen_time"></span></div> 
+        <div class="stat"><span class="label">Max Screen Time (hrs):</span> 
+            <span class="value" id="max_screen_time"></span></div> 
+        <div class="stat"><span class="label">Min Screen Time (hrs):</span> 
+            <span class="value" id="min_screen_time"></span></div> 
+ 
+         
+        <p class="description"> 
+            This summary gives an overview of the dataset, highlighting total records, distinct age 
+groups,  
+            gender split, and variations in daily screen time among Indian kids. 
+        </p> 
+    </div> 
+ 
+    <script> 
+        fetch('/api/screen_time_summary/') 
+            .then(response => response.json()) 
+            .then(data => { 
+                document.getElementById('total_entries').textContent = data.total_entries; 
+                document.getElementById('unique_ages').textContent = data.unique_ages; 
+ 
+                const genderDist = Object.entries(data.gender_distribution) 
+                    .map(([gender, count]) => `${gender}: ${count}`).join(', '); 
+                document.getElementById('gender_distribution').textContent = genderDist; 
+ 
+                document.getElementById('avg_screen_time').textContent = 
+data.avg_screen_time.toFixed(2); 
+                document.getElementById('max_screen_time').textContent = 
+data.max_screen_time.toFixed(2); 
+                document.getElementById('min_screen_time').textContent = 
+data.min_screen_time.toFixed(2); 
+            }); 
+    </script> 
+</body> 
+</html> 
+Screen_timing.html 
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <title>Screen Time by Age</title> 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+    <style> 
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px; 
+            background: #f7f7f7; 
+        } 
+        .container { 
+            background: #fff; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 8px #ccc; 
+            max-width: 800px; 
+            margin: auto; 
+        } 
+        h1 { 
+            color: #2c3e50; 
+        } 
+        table { 
+            width: 100%; 
+            margin-top: 20px; 
+            border-collapse: collapse; 
+        } 
+        th, td { 
+            padding: 8px; 
+            text-align: left; 
+        } 
+        th { 
+            background: #eee; 
+        } 
+        tr:nth-child(even) { 
+            background: #f9f9f9; 
+        } 
+    </style> 
+</head> 
+<body> 
+    <div class="container"> 
+        <h1>Average Screen Time by Age</h1> 
+        <table id="screen-time-table"> 
+            <thead> 
+                <tr> 
+                    <th>Age</th> 
+                    <th style="text-align:right;">Avg Daily Screen Time (hrs)</th> 
+                </tr> 
+            </thead> 
+            <tbody></tbody> 
+        </table> 
+        <canvas id="screen-time-bar" width="400" height="250" style="margin
+top:30px;"></canvas> 
+ 
+        <p style="text-align:center; font-style:italic; margin-top:15px;"> 
+            This chart visualizes the average daily screen time of children across different ages.  
+            The bar graph shows how screen usage tends to increase with age, and the line chart 
+highlights  
+            the cumulative distribution to indicate the most affected age groups. 
+        </p> 
+    </div> 
+ 
+    <script> 
+        fetch('/api/screen_time_by_age/') 
+            .then(response => response.json()) 
+            .then(data => { 
+                const tbody = document.querySelector('#screen-time-table tbody'); 
+                tbody.innerHTML = ''; 
+                const ages = []; 
+                const screenTimes = []; 
+                data.screen_time_by_age.forEach(row => { 
+                    const tr = document.createElement('tr'); 
+                    tr.innerHTML = `<td>${row.Age}</td><td style='text
+align:right;'>${row.Avg_Daily_Screen_Time_hr.toFixed(2)}</td>`; 
+                    tbody.appendChild(tr); 
+                    ages.push(row.Age); 
+                    screenTimes.push(row.Avg_Daily_Screen_Time_hr); 
+                }); 
+ 
+                let total = screenTimes.reduce((a, b) => a + b, 0); 
+                let cumulative = 0; 
+                const cumulativePercent = screenTimes.map(v => { 
+                    cumulative += v; 
+                    return +(cumulative / total * 100).toFixed(2); 
+                }); 
+ 
+                const ctx = document.getElementById('screen-time-bar').getContext('2d'); 
+                new Chart(ctx, { 
+                    type: 'bar', 
+                    data: { 
+                        labels: ages, 
+                        datasets: [ 
+                            { 
+                                label: 'Avg Screen Time (hrs)', 
+                                data: screenTimes, 
+                                backgroundColor: 'rgba(75, 192, 192, 0.6)', 
+                                borderColor: 'rgba(75, 192, 192, 1)', 
+                                borderWidth: 1, 
+                                yAxisID: 'y', 
+                            }, 
+                            { 
+                                label: 'Cumulative %', 
+                                data: cumulativePercent, 
+                                type: 'line', 
+                                borderColor: 'rgba(255, 99, 132, 1)', 
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)', 
+                                fill: false, 
+                                yAxisID: 'y1', 
+                                tension: 0.3, 
+                                pointRadius: 3 
+                            } 
+                        ] 
+                    }, 
+                    options: { 
+                        responsive: true, 
+                        plugins: { legend: { display: true } }, 
+                        scales: { 
+                            y: { 
+                                beginAtZero: true, 
+                                position: 'left', 
+                                title: { display: true, text: 'Avg Daily Screen Time (hrs)' }, 
+                            }, 
+                            y1: { 
+                                beginAtZero: true, 
+                                position: 'right', 
+                                min: 0, 
+                                max: 100, 
+                                title: { display: true, text: 'Cumulative %' }, 
+                                grid: { drawOnChartArea: false }, 
+                                ticks: { callback: v => v + '%' } 
+                            } 
+                        } 
+                    } 
+                }); 
+            }); 
+    </script> 
+</body> 
+</html> 
+Health_impact.html 
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <title>Health Impacts of Screen Time</title> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+    <style> 
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px; 
+            background: #f7f7f7; 
+        } 
+ 
+        .container { 
+            background: #fff; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 8px #ccc; 
+            max-width: 900px; 
+            margin: auto; 
+        } 
+ 
+        h1 { 
+            color: #2c3e50; 
+        } 
+ 
+        table { 
+            width: 100%; 
+            margin-top: 20px; 
+            border-collapse: collapse; 
+        } 
+ 
+        th, td { 
+            padding: 8px; 
+            text-align: left; 
+        } 
+ 
+        th { 
+            background: #eee; 
+        } 
+ 
+        tr:nth-child(even) { 
+            background: #f9f9f9; 
+        } 
+ 
+        .description { 
+            margin-top: 25px; 
+            font-style: italic; 
+            text-align: center; 
+            color: #555; 
+        } 
+    </style> 
+</head> 
+<body> 
+<div class="container"> 
+    <h1>Health Impacts of Screen Time</h1> 
+    <table id="health-impact-table"> 
+        <thead> 
+            <tr> 
+                <th>Health Issue</th> 
+                <th style="text-align:right;">Count</th> 
+            </tr> 
+        </thead> 
+        <tbody></tbody> 
+    </table> 
+    <canvas id="health-impact-chart" width="400" height="250" style="margin
+top:30px;"></canvas> 
+ 
+    <!-- 🔽 Description for report --> 
+    <p class="description"> 
+        This visualization shows how screen time is linked to different health issues in children.  
+        The bar chart highlights the most commonly reported problems and their frequency. 
+    </p> 
+</div> 
+ 
+<script> 
+    fetch('/api/health_impact/') 
+        .then(response => response.json()) 
+        .then(data => { 
+            if (data.error) { 
+                alert(data.error); 
+                return; 
+            } 
+            const tbody = document.querySelector('#health-impact-table tbody'); 
+            const labels = []; 
+            const values = []; 
+            data.health_impact.forEach(row => { 
+                const tr = document.createElement('tr'); 
+                tr.innerHTML = `<td>${row.Health_Issue}</td><td style='text
+align:right;'>${row.Count}</td>`; 
+                tbody.appendChild(tr); 
+                labels.push(row.Health_Issue); 
+                values.push(row.Count); 
+            }) 
+            const ctx = document.getElementById('health-impact-chart').getContext('2d'); 
+            new Chart(ctx, { 
+               type: 'bar', 
+                data: { 
+                    labels: labels, 
+                    datasets: [{ 
+                        label: 'Number of Kids Affected', 
+                        data: values, 
+                        backgroundColor: 'rgba(153, 102, 255, 0.6)', 
+                        borderColor: 'rgba(153, 102, 255, 1)', 
+                        borderWidth: 1 
+                    }] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    plugins: { 
+                        legend: { display: false }, 
+                    }, 
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            title: { display: true, text: 'Count' } 
+                        } 
+                    } 
+                } 
+            }); 
+        }); 
+</script> 
+</body> 
+</html>
