@@ -1,0 +1,24 @@
+# 📊 Descriptive Analysis on Screen Time
+## 🧠 Description
+This Django project performs a **descriptive analysis** of screen time habits among Indian children using a CSV dataset.  
+It provides an interactive **web interface** built with **HTML, Chart.js, and REST APIs**.
+
+### Key Sections
+1. **Screen Time Summary** – shows total entries, gender distribution, unique ages, and average/min/max screen time.  
+2. **Screen Time by Age** – groups and visualizes average screen time per age.  
+3. **Health Impacts** – analyzes frequency of health issues like eye strain, headache, etc.
+
+---
+
+## ⚙️ Tech Stack
+- **Backend:** Django
+- **Frontend:** HTML, CSS, Chart.js
+- **Data:** Indian_Kids_Screen_Time.csv
+- **Libraries:** pandas, os, JsonResponse
+
+
+## 🚀 How to Run
+
+1️⃣ **Install Requirements**
+```bash
+pip install django pandas
