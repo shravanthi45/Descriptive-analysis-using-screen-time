@@ -1,0 +1,47 @@
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.views import View
+import pandas as pd
+import os
+from django.conf import settings
+
+class ScreenTimeSummaryView(View):
+    def get(self, request):
+        csv_path = os.path.join(settings.BASE_DIR, 'analysis', 'static', 'data', 'Indian_Kids_Screen_Time.csv')
+        df = pd.read_csv(csv_path)
+        summary = {
+            'total_entries': int(len(df)),
+            'unique_ages': int(df['Age'].nunique()),
+            'gender_distribution': df['Gender'].value_counts().to_dict(),
+            'avg_screen_time': float(df['Avg_Daily_Screen_Time_hr'].mean()),
+            'max_screen_time': float(df['Avg_Daily_Screen_Time_hr'].max()),
+            'min_screen_time': float(df['Avg_Daily_Screen_Time_hr'].min()),
+        }
+        return JsonResponse(summary)
+
+def screen_time_by_age(request):
+    csv_path = os.path.join(settings.BASE_DIR, 'analysis', 'static', 'data', 'Indian_Kids_Screen_Time.csv')
+    df = pd.read_csv(csv_path)
+    age_screen_time = df.groupby('Age')['Avg_Daily_Screen_Time_hr'].mean().reset_index()
+    age_screen_time = age_screen_time.sort_values('Avg_Daily_Screen_Time_hr', ascending=False)
+    data = age_screen_time.to_dict(orient='records')
+    return JsonResponse({'screen_time_by_age': data})
+
+def health_impact_data(request):
+    csv_path = os.path.join(settings.BASE_DIR, 'analysis', 'static', 'data', 'Indian_Kids_Screen_Time.csv')
+    df = pd.read_csv(csv_path)
+    if 'Health_Impacts' not in df.columns:
+        return JsonResponse({'error': 'Column "Health_Impacts" not found in CSV.'}, status=400)
+    health_counts = df['Health_Impacts'].value_counts().reset_index()
+    health_counts.columns = ['Health_Issue', 'Count']
+    data = health_counts.to_dict(orient='records')
+    return JsonResponse({'health_impact': data})
+
+def screen_timing_page(request):
+    return render(request, 'descriptive/screen_timing.html')
+
+def screen_summary_page(request):
+    return render(request, 'descriptive/screen_summary.html')
+
+def health_impact_page(request):
+    return render(request, 'descriptive/health_impact.html')
